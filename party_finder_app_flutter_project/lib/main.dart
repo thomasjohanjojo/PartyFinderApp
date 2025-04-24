@@ -10,6 +10,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: "Take A Picture",
       home: Scaffold(
         body: Column(
           children: <Widget>[
