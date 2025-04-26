@@ -1,39 +1,48 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const RootWidget());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class RootWidget extends StatefulWidget {
+  const RootWidget({Key? key}) : super(key: key);
+  @override
+  SelectThePicturePage createState() => SelectThePicturePage();
+}
+
+class SelectThePicturePage extends State<RootWidget> {
+  Widget currentWidgetBeingDisplayed = Text("ImageWillBeDisplayedHere");
+
+  void openTheImageSelectorWindowUsingWindowsExplorer() {
+    setState(() {
+      currentWidgetBeingDisplayed = ExplorerPageWidgetForSelectingTheImage();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Take A Picture",
-      home: Scaffold(
-        body: Column(
-          children: <Widget>[
-            Center(
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height *
-                    0.7, // Adjust this value as needed (e.g., 0.8, 0.9)
-                child: FittedBox(
-                  fit: BoxFit.fitHeight,
-                  child: Image.asset("assets/images/masterOfDirtPicture.jpg"),
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                print('Elevated Button Pressed!');
-                // Add your button's action here
-              },
-              child: const Text('Elevated Button'),
-            ),
-          ],
-        ),
-      ),
+      home: Column(children: <Widget>[
+        ElevatedButton(
+            onPressed: openTheImageSelectorWindowUsingWindowsExplorer,
+            child: Text("Select Image")),
+        currentWidgetBeingDisplayed
+      ]),
     );
+  }
+}
+
+class ExplorerPageWidgetForSelectingTheImage extends StatefulWidget {
+  const ExplorerPageWidgetForSelectingTheImage({Key? key}) : super(key: key);
+
+  @override
+  StateOfExplorerPageWidgetForSelectingTheImage createState() =>
+      StateOfExplorerPageWidgetForSelectingTheImage();
+}
+
+class StateOfExplorerPageWidgetForSelectingTheImage
+    extends State<ExplorerPageWidgetForSelectingTheImage> {
+  Widget build(BuildContext context) {
+    return Container(child: Text("None"));
   }
 }
