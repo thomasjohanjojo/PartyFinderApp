@@ -33,27 +33,56 @@ class SelectThePicturePage extends State<RootWidget> {
         if (kIsWeb) {
           // Web: Use Image.memory with the file bytes.
           if (file.bytes != null) {
-            currentWidgetBeingDisplayed = ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 500, maxWidth: 500),
-              child: Image.memory(file.bytes!, fit: BoxFit.contain),
+            currentWidgetBeingDisplayed = Column(
+              children: [
+                ConstrainedBox(
+                  constraints:
+                      const BoxConstraints(maxHeight: 500, maxWidth: 500),
+                  child: Image.memory(file.bytes!, fit: BoxFit.contain),
+                ),
+                const SizedBox(height: 5), // For spacing
+                ElevatedButton(
+                  onPressed: null,
+                  child: const Text("Next Page"),
+                )
+              ],
             );
           } else if (file.path != null) {
-            currentWidgetBeingDisplayed = ConstrainedBox(
-              // Use ConstrainedBox
-              constraints: const BoxConstraints(maxHeight: 500, maxWidth: 500),
-              child: Image.network(file.path!, fit: BoxFit.contain),
+            currentWidgetBeingDisplayed = Column(
+              children: [
+                ConstrainedBox(
+                  // Use ConstrainedBox
+                  constraints:
+                      const BoxConstraints(maxHeight: 500, maxWidth: 500),
+                  child: Image.network(file.path!, fit: BoxFit.contain),
+                ),
+                const SizedBox(height: 5), // For spacing
+                ElevatedButton(
+                  onPressed: null,
+                  child: const Text("Next Page"),
+                )
+              ],
             );
           } else {
             currentWidgetBeingDisplayed = const Text("Could not display image");
           }
         } else {
           // Mobile (Android/iOS): Use Image.file with the file path.
-          currentWidgetBeingDisplayed = ConstrainedBox(
-            // Use ConstrainedBox
-            constraints: const BoxConstraints(
-                maxHeight: 500, maxWidth: 500), // Set max height and width
-            child: Image.file(File(file.path!),
-                fit: BoxFit.contain), // Use BoxFit.contain
+          currentWidgetBeingDisplayed = Column(
+            children: [
+              ConstrainedBox(
+                // Use ConstrainedBox
+                constraints: const BoxConstraints(
+                    maxHeight: 500, maxWidth: 500), // Set max height and width
+                child: Image.file(File(file.path!),
+                    fit: BoxFit.contain), // Use BoxFit.contain
+              ),
+              const SizedBox(height: 5), // For spacing
+              ElevatedButton(
+                onPressed: null,
+                child: const Text("Next Page"),
+              )
+            ],
           );
         }
       });
