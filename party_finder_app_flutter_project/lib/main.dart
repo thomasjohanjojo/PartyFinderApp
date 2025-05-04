@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:image/image.dart' as img; // Import the image package
 
 void main() {
   runApp(const RootWidget());
@@ -83,15 +82,8 @@ class SelectThePicturePage extends State<RootWidget> {
       try {
         final response = await _sendImageToPython(file);
         if (response != null) {
-          setState(() {
-            currentWidgetBeingDisplayed = Column(
-              children: [
-                currentWidgetBeingDisplayed,
-                const SizedBox(height: 20),
-                Text("Gemini Response: $geminiResponse"),
-              ],
-            );
-          });
+          // Print the response to the terminal
+          print("Gemini Response: ${response['extracted_text']}");
         }
       } catch (e) {
         print("Error sending image: $e");
@@ -147,9 +139,6 @@ class SelectThePicturePage extends State<RootWidget> {
         var decodedResponse = json.decode(responseBody);
         print('Response from Python: $decodedResponse');
         if (decodedResponse['status'] == 'success') {
-          setState(() {
-            geminiResponse = decodedResponse['extracted_text'];
-          });
           return decodedResponse;
         } else {
           setState(() {
@@ -191,7 +180,7 @@ class SelectThePicturePage extends State<RootWidget> {
                 ),
                 const SizedBox(height: 20),
                 currentWidgetBeingDisplayed,
-                Text("Response: $geminiResponse"),
+                // Removed Text("Response: $geminiResponse"),
               ],
             ),
           ),
