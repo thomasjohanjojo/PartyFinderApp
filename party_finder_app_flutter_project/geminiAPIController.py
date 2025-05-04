@@ -1,37 +1,71 @@
+from flask import Flask, request, jsonify
+import base64
+import io
+from PIL import Image  # Import Pillow for image processing
 import google.generativeai as genai
-from PIL import Image
 import os
 
+app = Flask(__name__)
+
 # Replace with your actual Gemini API key
-GEMINI_API_KEY = "AIzaSyCs6siJ6oETE9SQKD57TXTK9GM6hvdBn_k"
+GEMINI_API_KEY = "AIzaSyCs6siJ6oETE9SQKD57TXTK9GM6hvdBn_k"  #  <---  IMPORTANT: Replace this!
 genai.configure(api_key=GEMINI_API_KEY)
 
-def extract_details_from_poster(image_path):
+
+def extract_details_from_poster(image_data):
     """
     Sends an image to the Gemini API and attempts to extract event details.
 
     Args:
-        image_path (str): The path to the image file.
+        image_data (bytes): The image data as bytes.
 
     Returns:
         str: The text extracted by the Gemini API.
     """
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        img = Image.open(image_path)
-        response = model.generate_content([img, "Extract the name of the event, date and time, location, and price of entry from this poster. If the entry is free, please state that."])
+        model = genai.GenerativeModel('gemini-1.5-flash')  #  Using gemini-1.5-flash
+        #  Open image from bytes
+        img = Image.open(io.BytesIO(image_data))
+        response = model.generate_content([
+            img,
+            "Extract the name of the event, date and time, location, and price of entry from this poster. If the entry is free, please state that."
+        ])
         response.resolve()
         return response.text
     except Exception as e:
         return f"An error occurred: {e}"
 
+
+@app.route('/process_poster', methods=['POST'])
+def process_poster():
+    """
+    Handles POST requests to process an image and extract details using Gemini.
+    Expects the image data as base64 in the 'image_data' field of the form data.
+
+    Returns:
+        jsonify: A JSON response containing the extracted text or an error message.
+    """
+    try:
+        # Get the image data from the request
+        image_data_base64 = request.form.get('image_data')
+        if not image_data_base64:
+            return jsonify({'error': 'No image_data provided', 'status': 'error'}), 400
+
+        # Decode the base64 string to bytes
+        image_data = base64.b64decode(image_data_base64)
+
+        # Extract details using the Gemini API
+        extracted_text = extract_details_from_poster(image_data)
+
+        # Return the result as JSON
+        return jsonify({'extracted_text': extracted_text, 'status': 'success'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e), 'status': 'error'}), 500
+
+
+
 if __name__ == "__main__":
-    image_folder = "Images"  # Replace with the actual folder name containing your images
-    for filename in os.listdir(image_folder):
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            image_file_path = os.path.join(image_folder, filename)
-            print(f"Processing image: {image_file_path}")
-            extracted_text = extract_details_from_poster(image_file_path)
-            print("Extracted details:")
-            print(extracted_text)
-            print("-" * 20)
+    #  Run the Flask app.  The original code for direct execution is removed,
+    #  as the server will handle requests.
+    app.run(host='127.0.0.1', port=5000, debug=True)  #  Added debug=True for easier development
