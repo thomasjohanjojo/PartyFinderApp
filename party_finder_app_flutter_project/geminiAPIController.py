@@ -1,11 +1,14 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # Import CORS
 import base64
 import io
-from PIL import Image  # Import Pillow for image processing
+from PIL import Image
 import google.generativeai as genai
 import os
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
 
 # Replace with your actual Gemini API key
 GEMINI_API_KEY = "AIzaSyCs6siJ6oETE9SQKD57TXTK9GM6hvdBn_k"  #  <---  IMPORTANT: Replace this!
@@ -48,6 +51,7 @@ def process_poster():
     try:
         # Get the image data from the request
         image_data_base64 = request.form.get('image_data')
+        print(f"Received image_data_base64: {image_data_base64}") #check
         if not image_data_base64:
             return jsonify({'error': 'No image_data provided', 'status': 'error'}), 400
 

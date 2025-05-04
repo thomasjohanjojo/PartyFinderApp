@@ -1,7 +1,10 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:image/image.dart' as img; // Import the image package
 
 void main() {
   runApp(const RootWidget());
@@ -16,13 +19,13 @@ class RootWidget extends StatefulWidget {
 class SelectThePicturePage extends State<RootWidget> {
   Widget currentWidgetBeingDisplayed =
       const Text("Image will be displayed here");
+  String geminiResponse = "";
 
-  // Function to open file explorer and display image
-  void openFileExplorer() async {
+  Future<void> _processImageAndSendToPython(BuildContext context) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: false,
-      withData: true, // Important: Get the file data!
+      withData: true,
     );
 
     if (result != null) {
@@ -31,7 +34,6 @@ class SelectThePicturePage extends State<RootWidget> {
 
       setState(() {
         if (kIsWeb) {
-          // Web: Use Image.memory with the file bytes.
           if (file.bytes != null) {
             currentWidgetBeingDisplayed = Column(
               children: [
@@ -40,58 +42,136 @@ class SelectThePicturePage extends State<RootWidget> {
                       const BoxConstraints(maxHeight: 500, maxWidth: 500),
                   child: Image.memory(file.bytes!, fit: BoxFit.contain),
                 ),
-                const SizedBox(height: 5), // For spacing
-                ElevatedButton(
-                  onPressed: null,
-                  child: const Text("Next Page"),
-                )
+                const SizedBox(height: 5),
+                const Text("Sending image..."),
               ],
             );
           } else if (file.path != null) {
             currentWidgetBeingDisplayed = Column(
               children: [
                 ConstrainedBox(
-                  // Use ConstrainedBox
                   constraints:
                       const BoxConstraints(maxHeight: 500, maxWidth: 500),
                   child: Image.network(file.path!, fit: BoxFit.contain),
                 ),
-                const SizedBox(height: 5), // For spacing
-                ElevatedButton(
-                  onPressed: null,
-                  child: const Text("Next Page"),
-                )
+                const SizedBox(height: 5),
+                const Text("Sending image..."),
               ],
             );
           } else {
             currentWidgetBeingDisplayed = const Text("Could not display image");
+            geminiResponse = "Could not display image";
           }
         } else {
-          // Mobile (Android/iOS): Use Image.file with the file path.
           currentWidgetBeingDisplayed = Column(
             children: [
               ConstrainedBox(
-                // Use ConstrainedBox
-                constraints: const BoxConstraints(
-                    maxHeight: 500, maxWidth: 500), // Set max height and width
-                child: Image.file(File(file.path!),
-                    fit: BoxFit.contain), // Use BoxFit.contain
+                constraints:
+                    const BoxConstraints(maxHeight: 500, maxWidth: 500),
+                child: Image.file(
+                  File(file.path!),
+                  fit: BoxFit.contain,
+                ),
               ),
-              const SizedBox(height: 5), // For spacing
-              ElevatedButton(
-                onPressed: null,
-                child: const Text("Next Page"),
-              )
+              const SizedBox(height: 5),
+              const Text("Sending image..."),
             ],
           );
         }
       });
+
+      try {
+        final response = await _sendImageToPython(file);
+        if (response != null) {
+          setState(() {
+            currentWidgetBeingDisplayed = Column(
+              children: [
+                currentWidgetBeingDisplayed,
+                const SizedBox(height: 20),
+                Text("Gemini Response: $geminiResponse"),
+              ],
+            );
+          });
+        }
+      } catch (e) {
+        print("Error sending image: $e");
+        setState(() {
+          geminiResponse = "Error: $e";
+          currentWidgetBeingDisplayed = Column(
+            children: [
+              currentWidgetBeingDisplayed,
+              const SizedBox(height: 20),
+              Text("Error sending image: $e"),
+            ],
+          );
+        });
+      }
     } else {
-      // User canceled the picker
       print("User canceled file picking");
       setState(() {
         currentWidgetBeingDisplayed = const Text("User canceled file picking");
+        geminiResponse = "User canceled";
       });
+    }
+  }
+
+  Future<Map<String, dynamic>?> _sendImageToPython(PlatformFile file) async {
+    const url = 'http://127.0.0.1:5000/process_poster';
+
+    try {
+      // Read file data
+      List<int> imageBytes;
+      if (kIsWeb) {
+        if (file.bytes != null) {
+          imageBytes = file.bytes!;
+        } else {
+          throw Exception("File has no data");
+        }
+      } else {
+        imageBytes = await File(file.path!).readAsBytes();
+      }
+
+      // Encode to base64
+      String base64Image = base64Encode(imageBytes);
+
+      // Create request
+      var request = http.Request('POST', Uri.parse(url));
+      request.bodyFields = {
+        'image_data': base64Image,
+      };
+
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        var responseBody = await response.stream.bytesToString();
+        var decodedResponse = json.decode(responseBody);
+        print('Response from Python: $decodedResponse');
+        if (decodedResponse['status'] == 'success') {
+          setState(() {
+            geminiResponse = decodedResponse['extracted_text'];
+          });
+          return decodedResponse;
+        } else {
+          setState(() {
+            geminiResponse = 'Error from Python: ${decodedResponse['error']}';
+          });
+          return null;
+        }
+      } else {
+        setState(() {
+          geminiResponse =
+              'Error: ${response.statusCode} - ${response.reasonPhrase}';
+        });
+        print(
+            'Error sending image: ${response.statusCode} - ${response.reasonPhrase}');
+        return null;
+      }
+    } catch (e) {
+      setState(() {
+        geminiResponse = 'Exception: $e';
+      });
+      print('Exception sending image: $e');
+      return null;
     }
   }
 
@@ -99,21 +179,19 @@ class SelectThePicturePage extends State<RootWidget> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        // Added Scaffold for better layout
         body: Center(
-          // Centered the content
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center, // Centered vertically
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 ElevatedButton(
-                  onPressed: openFileExplorer,
-                  child: const Text("Select Image"),
+                  onPressed: () => _processImageAndSendToPython(context),
+                  child: const Text("Select Image and Send to Python"),
                 ),
-                const SizedBox(height: 20), // Added some spacing
-                currentWidgetBeingDisplayed, //  Use directly
+                const SizedBox(height: 20),
+                currentWidgetBeingDisplayed,
+                Text("Response: $geminiResponse"),
               ],
             ),
           ),
