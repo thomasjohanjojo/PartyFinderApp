@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.errors import PyMongoError
+from bson.objectid import ObjectId
 from typing import List, Optional
 import datetime
 from pymongo.errors import ConnectionFailure
@@ -62,3 +63,27 @@ class PosterDetailsClass(PosterDetailsInterface):
             # Catch any other unexpected exception
             print(f"Unexpected error during insertion: {e}")
             return None
+
+    def getPosterById(self, posterId: str) -> PosterDetails|None:
+        if self.posterDetailsCollection is None:
+            raise DatabaseConnectionError("Collection object is not initialized. Cannot perform operation.")
+        try:
+            idObjectConvertedToBsonObjectId = ObjectId(posterId)
+            mongoDBretrievedObject = self.posterDetailsCollection.find_one(
+                {"_id": idObjectConvertedToBsonObjectId}
+                )
+            
+            if mongoDBretrievedObject is None:
+                print(f"PosterId does not exist: {posterId}")
+                return None
+            
+            mongoDBretrievedObject["id"] = str(mongoDBretrievedObject.pop("_id"))
+            posterDetailsObject = PosterDetails.model_validate(mongoDBretrievedObject)
+            return posterDetailsObject
+        
+        except PyMongoError as e:
+            # Operational database error (e.g., query failure)
+            raise RuntimeError(f"MongoDB retrieval operation failed: {e}") from e
+        except Exception as e:
+            # Catch errors like invalid ObjectId format (ValueError)
+            raise RuntimeError(f"An unexpected error occurred during retrieval: {e}") from e
