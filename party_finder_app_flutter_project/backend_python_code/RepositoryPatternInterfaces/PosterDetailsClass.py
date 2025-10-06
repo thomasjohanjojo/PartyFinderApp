@@ -87,3 +87,20 @@ class PosterDetailsClass(PosterDetailsInterface):
         except Exception as e:
             # Catch errors like invalid ObjectId format (ValueError)
             raise RuntimeError(f"An unexpected error occurred during retrieval: {e}") from e
+    
+    def getAllPosters(self) -> List[PosterDetails]:
+        if self.posterDetailsCollection is None:
+            raise DatabaseConnectionError("Collection Object is not initialized. Cannot perform operation.")
+        try:
+            listOfPosterDetailsObjects: List[PosterDetails] = []
+            pymongoCursor = self.posterDetailsCollection.find({})
+            for posterObjectInCursor in pymongoCursor:
+                posterObjectInCursor["id"] = str(posterObjectInCursor.pop("_id"))
+                pydanticVerifiedPosterDetailsObject = PosterDetails.model_validate(posterObjectInCursor)
+                listOfPosterDetailsObjects.append(pydanticVerifiedPosterDetailsObject)
+            
+            return listOfPosterDetailsObjects
+        
+        except Exception as e:
+            raise RuntimeError(f"MongoDB bulk retrieval operation failed: {e}") from e
+                
