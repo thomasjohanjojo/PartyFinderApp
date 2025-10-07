@@ -104,3 +104,18 @@ class PosterDetailsClass(PosterDetailsInterface):
         except Exception as e:
             raise RuntimeError(f"MongoDB bulk retrieval operation failed: {e}") from e
                 
+    def deletePoster(self, posterId: str) -> bool:
+        if self.posterDetailsCollection is None:
+            raise DatabaseConnectionError("Collection Object is not initialized. Cannot perform operation.")
+        try:
+            objectIdInBson = ObjectId(posterId)
+            queryFilter = {"_id": objectIdInBson}
+            resultWithDeletionCount = self.posterDetailsCollection.delete_one(queryFilter)
+            if resultWithDeletionCount.deleted_count == 1:
+                deletionSuccessStatus = True
+                return deletionSuccessStatus
+            else:
+                deletionSuccessStatus = False
+                return deletionSuccessStatus
+        except Exception as e:
+            raise RuntimeError(f"MongoDB deletion operation failed: {e}") from e
