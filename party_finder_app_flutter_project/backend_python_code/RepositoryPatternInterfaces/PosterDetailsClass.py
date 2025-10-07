@@ -148,3 +148,19 @@ class PosterDetailsClass(PosterDetailsInterface):
             return listOfPosterDetailsObjects
         except Exception as e:
             raise RuntimeError(f"MongoDB bulk retrieval operation failed: {e}") from e
+    
+    def getAllPostersAfterSetTime(self, time: datetime.time) -> List[PosterDetails]:
+        if self.posterDetailsCollection is None:
+            raise DatabaseConnectionError("Collection object is not initialized. Cannot perform operation")
+        try:
+            listOfPosterDetailsObjects: List[PosterDetails] = []
+            pymongoCursor = self.posterDetailsCollection.find({})
+            for posterObjectInCursor in pymongoCursor:
+                posterObjectInCursor["id"] = str(posterObjectInCursor.pop("_id"))
+                pydanticVerifiedPosterDetailsObject = PosterDetails.model_validate(posterObjectInCursor)
+                if pydanticVerifiedPosterDetailsObject.dateAndTime.time() > time:
+                    listOfPosterDetailsObjects.append(pydanticVerifiedPosterDetailsObject)
+            
+            return listOfPosterDetailsObjects
+        except Exception as e:
+            raise RuntimeError(f"MongoDB bulk retrieval operation failed: {e}") from e
