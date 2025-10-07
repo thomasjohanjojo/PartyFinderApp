@@ -119,3 +119,32 @@ class PosterDetailsClass(PosterDetailsInterface):
                 return deletionSuccessStatus
         except Exception as e:
             raise RuntimeError(f"MongoDB deletion operation failed: {e}") from e
+    
+    def getAllPostersByDate(self, date: datetime.date) -> List[PosterDetails]:
+        if self.posterDetailsCollection is None:
+            raise DatabaseConnectionError("Collection Object is not initialized. Cannot perform operation")
+        try:
+            listOfPosterDetailsObjects: List[PosterDetails] = []
+            
+            startOfTheDay = datetime.datetime(date.year, date.month, date.day, 0, 0, 0 )
+            startOfTheNextDay = datetime.datetime(
+                (date + datetime.timedelta(days=1)).year,
+                (date + datetime.timedelta(days=1)).month,
+                (date + datetime.timedelta(days=1)).day,
+                0, # Hour
+                0, # Minute
+                0 #second
+                )
+            pymongoCursor = self.posterDetailsCollection.find({
+                "dateAndTime": {
+                    "$gte": startOfTheDay,
+                    "$lt": startOfTheNextDay
+                    }})
+            for posterObjectInCursor in pymongoCursor:
+                posterObjectInCursor["id"] = str(posterObjectInCursor.pop("_id"))
+                pydanticVerifiedPosterDetailsObject = PosterDetails.model_validate(posterObjectInCursor)
+                listOfPosterDetailsObjects.append(pydanticVerifiedPosterDetailsObject)
+            
+            return listOfPosterDetailsObjects
+        except Exception as e:
+            raise RuntimeError(f"MongoDB bulk retrieval operation failed: {e}") from e

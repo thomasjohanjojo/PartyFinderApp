@@ -2,7 +2,7 @@ from pydantic import BaseModel
 import datetime
 
 class PosterDetails(BaseModel):
+    id : str
     nameOfTheEvent : str
-    date : datetime.date
-    time : datetime.time
+    dateAndTime: datetime.datetime
     entryFee : float
