@@ -168,3 +168,39 @@ def get_all_upcoming_posters(
 
     # Return the list. An empty list is the correct response if no posters are found.
     return posters
+
+
+# --- The Endpoint Definition ---
+
+@app.post(
+    "/posters", 
+    response_model=PosterDetails, 
+    status_code=status.HTTP_201_CREATED, # Standard code for successful creation
+    summary="Create a new poster and add it to the database"
+)
+def add_new_poster(
+    # Request Body: FastAPI knows this is the body because PosterDetails is a Pydantic model
+    poster_details_object: PosterDetails, 
+    # Inject the repository
+    repo: Annotated[PosterDetailsInterface, Depends(get_poster_repo)]
+):
+    """
+    Accepts a PosterDetails JSON object in the request body.
+    Adds the object to the database and returns the created object, 
+    including any server-generated fields (like the final ID).
+    """
+    
+    # Call your abstract method from the injected concrete class
+    # The return value is the newly created object (which may now have a database-generated ID)
+    created_poster = repo.addPosterDetailsToDatabase(poster_details_object)
+
+    # Handle the 'None' case (if the database operation failed for some reason)
+    if created_poster is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail="Failed to add poster to the database."
+        )
+
+    # Return the newly created object. 
+    # FastAPI returns it with the 201 Created status code.
+    return created_poster
