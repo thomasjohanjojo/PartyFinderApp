@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Depends, HTTPException
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status
 from party_finder_app_flutter_project.backend_python_code.RepositoryPatternInterfaces.pydantic_models.pydanticModels import PosterDetails
 from party_finder_app_flutter_project.backend_python_code.RepositoryPatternInterfaces.PosterDetailsInterface import PosterDetailsInterface
 from party_finder_app_flutter_project.backend_python_code.RepositoryPatternInterfaces.PosterDetailsClass import PosterDetailsClass
@@ -57,3 +57,34 @@ def getAllPosters(
     # if the list is empty; you return an empty list ([]).
     
     return all_posters
+
+# --- The Endpoint Definition ---
+
+# 1. Use @app.delete() decorator
+# 2. Use the path parameter {poster_id}
+# 3. No response_model is strictly required, as the function returns a simple status.
+@app.delete("/posters/{poster_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a poster by its ID")
+def delete_poster_by_id(
+    poster_id: str,
+    # Inject the repository instance
+    repo: Annotated[PosterDetailsInterface, Depends(get_poster_repo)]
+):
+    """
+    Deletes a single poster using its unique ID.
+    Returns HTTP 204 No Content upon successful deletion.
+    """
+    
+    # Call your abstract method from the injected concrete class
+    success = repo.deletePoster(poster_id)
+
+    # Handle the result based on the boolean return
+    if not success:
+        # If the repository reports the delete failed (likely because the ID wasn't found)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Poster with ID '{poster_id}' not found or could not be deleted"
+        )
+    
+    # If successful, FastAPI will automatically return the 
+    # status_code defined in the decorator (204 No Content).
+    return
