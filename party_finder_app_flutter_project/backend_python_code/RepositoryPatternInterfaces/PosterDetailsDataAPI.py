@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter, Depends, HTTPException
 from party_finder_app_flutter_project.backend_python_code.RepositoryPatternInterfaces.pydantic_models.pydanticModels import PosterDetails
 from party_finder_app_flutter_project.backend_python_code.RepositoryPatternInterfaces.PosterDetailsInterface import PosterDetailsInterface
 from party_finder_app_flutter_project.backend_python_code.RepositoryPatternInterfaces.PosterDetailsClass import PosterDetailsClass
-from typing import Annotated
+from typing import Annotated, List
 from functools import lru_cache #To make the database connection a singlton to prevent re instantiation
 
 
@@ -38,3 +38,22 @@ def getPosterByID(
         raise HTTPException(status_code=404, detail=f"Poster {posterID} not found")
     
     return poster
+
+# --- 3. ANOTHER ENDPOINT ---
+@app.get("/posters", response_model= List[PosterDetails], summary="Get a list of all the posters")
+def getAllPosters(
+    # Reuse the same singleton dependency provider
+    repo: Annotated[PosterDetailsInterface, Depends(get_poster_repo)]
+):
+    """
+    Retrieves all available posters from the repository.
+    The response will be an array of PosterDetails objects.
+    """
+    
+    # Call your abstract method from the injected concrete class
+    all_posters = repo.getAllPosters()
+
+    # Unlike the single-item lookup, you usually don't raise a 404 
+    # if the list is empty; you return an empty list ([]).
+    
+    return all_posters
