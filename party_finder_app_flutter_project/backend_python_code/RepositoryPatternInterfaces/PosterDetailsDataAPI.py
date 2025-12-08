@@ -141,3 +141,30 @@ def get_posters_after_time(
 
     # Return the list. No special error handling needed for an empty list.
     return posters
+
+
+# --- The Endpoint Definition ---
+
+@app.get(
+    "/posters/upcoming", 
+    response_model=List[PosterDetails], 
+    summary="Get all posters scheduled after a specific date and time"
+)
+def get_all_upcoming_posters(
+    # Query Parameter 1: Date (e.g., '?date=2025-12-08')
+    date: DateType, 
+    # Query Parameter 2: Time (e.g., '&time=16:30:00')
+    time: TimeType, 
+    # Reuse the singleton dependency
+    repo: Annotated[PosterDetailsInterface, Depends(get_poster_repo)]
+):
+    """
+    Retrieves all posters that have events scheduled after the provided date and time combination.
+    If no posters are found, an empty list is returned (HTTP 200 OK).
+    """
+    
+    # Call the abstract method from the injected concrete class
+    posters = repo.getAllUpcomingPosters(date, time)
+
+    # Return the list. An empty list is the correct response if no posters are found.
+    return posters
