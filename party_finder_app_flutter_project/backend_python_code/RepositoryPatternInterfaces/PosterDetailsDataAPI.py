@@ -5,6 +5,7 @@ from party_finder_app_flutter_project.backend_python_code.RepositoryPatternInter
 from typing import Annotated, List
 from functools import lru_cache #To make the database connection a singlton to prevent re instantiation
 from datetime import date as DateType # Import date and alias it to avoid conflict
+from datetime import time as TimeType # Import time and alias it for clarity
 
 
 app = FastAPI()
@@ -114,4 +115,29 @@ def get_posters_by_date(
     posters = repo.getAllPostersByDate(date)
 
     # Return the list. An empty list is the correct response if no posters are found.
+    return posters
+
+
+# --- The Endpoint Definition ---
+
+@app.get(
+    "/posters/after_time", 
+    response_model=List[PosterDetails], 
+    summary="Get all posters scheduled after a specific time"
+)
+def get_posters_after_time(
+    # Query Parameter: FastAPI automatically looks for '?time=HH:MM:SS'
+    time: TimeType, 
+    # Reuse the singleton dependency
+    repo: Annotated[PosterDetailsInterface, Depends(get_poster_repo)]
+):
+    """
+    Retrieves all posters that have an event scheduled after the provided time (HH:MM:SS).
+    If no posters are found, an empty list is returned (HTTP 200 OK).
+    """
+    
+    # Call the abstract method from the injected concrete class
+    posters = repo.getAllPostersAfterSetTime(time)
+
+    # Return the list. No special error handling needed for an empty list.
     return posters
