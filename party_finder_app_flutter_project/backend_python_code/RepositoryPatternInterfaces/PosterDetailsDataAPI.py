@@ -4,6 +4,7 @@ from party_finder_app_flutter_project.backend_python_code.RepositoryPatternInter
 from party_finder_app_flutter_project.backend_python_code.RepositoryPatternInterfaces.PosterDetailsClass import PosterDetailsClass
 from typing import Annotated, List
 from functools import lru_cache #To make the database connection a singlton to prevent re instantiation
+from datetime import date as DateType # Import date and alias it to avoid conflict
 
 
 app = FastAPI()
@@ -88,3 +89,29 @@ def delete_poster_by_id(
     # If successful, FastAPI will automatically return the 
     # status_code defined in the decorator (204 No Content).
     return
+
+# --- The Endpoint Definition ---
+
+# 1. Path is /posters/by_date. This is clean and avoids mixing with /posters/{id}
+# 2. response_model is List[PosterDetails]
+@app.get(
+    "/posters/by_date", 
+    response_model=List[PosterDetails], 
+    summary="Get all posters for a specific date"
+)
+def get_posters_by_date(
+    # Query Parameter: FastAPI automatically looks for '?date=YYYY-MM-DD'
+    date: DateType, 
+    # Reuse the singleton dependency
+    repo: Annotated[PosterDetailsInterface, Depends(get_poster_repo)]
+):
+    """
+    Retrieves all posters that have an event scheduled on the provided date (YYYY-MM-DD).
+    If no posters are found, an empty list is returned.
+    """
+    
+    # Call the abstract method from the injected concrete class
+    posters = repo.getAllPostersByDate(date)
+
+    # Return the list. An empty list is the correct response if no posters are found.
+    return posters
