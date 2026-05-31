@@ -5,7 +5,7 @@ from party_finder_app_flutter_project.backend_python_code.RepositoryPatternInter
 
 class PosterDetailsInterface(ABC):
     @abstractmethod
-    def addPosterDetailsToDatabase(self, posterDetailsObject: PosterDetails) -> PosterDetails:
+    def addPosterDetailsToDatabase(self, posterDetailsObject: PosterDetails) -> PosterDetails|None:
         """
         This function adds the poster details  data contained in the posterDetailsObject to a database,
         as a posterDetailsObject
