@@ -6,9 +6,19 @@ from typing import Annotated, List
 from functools import lru_cache #To make the database connection a singlton to prevent re instantiation
 from datetime import date as DateType # Import date and alias it to avoid conflict
 from datetime import time as TimeType # Import time and alias it for clarity
+from fastapi.middleware.cors import CORSMiddleware # ADD THIS IMPORT FOR CORS ACTIVATION
 
 
 app = FastAPI()
+
+# ADD THIS BLOCK TO ENABLE CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, replace "*" with your Flutter app's domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- 1. THE DEPENDENCY PROVIDER ---
 # This function acts as the "Factory". It tells FastAPI:
