@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/poster_details.dart';
 import '../services/api_service.dart';
-import '../services/gpt_service.dart';
+import '../services/gemini_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -13,7 +13,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ApiService _apiService = ApiService();
-  final GptService _gptService = GptService();
+  final GeminiService _geminiService = GeminiService(); 
   final ImagePicker _picker = ImagePicker();
 
   List<PosterDetails> _events = [];
@@ -50,15 +50,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _uploadAndProcessPoster() async {
     try {
-      // CHANGED: Using ImageSource.gallery opens the desktop file picker on Flutter Web
+      // Using ImageSource.gallery opens the desktop file picker on Flutter Web
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       
       if (image == null) return; // User canceled the file picker
 
       setState(() => _isProcessingImage = true);
 
-      // Send the uploaded file to GPT API to extract text & format into object
-      final extractedDetails = await _gptService.extractDetailsFromImage(image);
+      // Send the uploaded file to Gemini API to extract text & format into object
+      final extractedDetails = await _geminiService.extractDetailsFromImage(image);
 
       // Log into database via FastAPI
       await _apiService.addPoster(extractedDetails);
@@ -145,8 +145,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _uploadAndProcessPoster,
-        icon: const Icon(Icons.upload_file), // Updated icon
-        label: const Text("Upload Poster"),  // Updated text
+        icon: const Icon(Icons.upload_file),
+        label: const Text("Upload Poster"), 
       ),
     );
   }
