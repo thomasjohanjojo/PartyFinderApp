@@ -2,17 +2,21 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/poster_details.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GeminiService {
-  // Insert your actual Gemini API key here. 
-  // For production, store this securely using flutter_dotenv or environment variables.
-  static const String _apiKey = 'YOUR_GEMINI_API_KEY';
-
+  
   Future<PosterDetails> extractDetailsFromImage(XFile imageFile) async {
-    // Initialize the model. Gemini 1.5 Flash is recommended for text-and-image tasks.
+    // READ THE KEY FROM THE .ENV FILE
+    final apiKey = dotenv.env['GEMINI_API_KEY'];
+    
+    if (apiKey == null || apiKey.isEmpty) {
+      throw Exception('Gemini API key is missing. Please check your .env file.');
+    }
+
     final model = GenerativeModel(
       model: 'gemini-1.5-flash',
-      apiKey: _apiKey,
+      apiKey: apiKey, // Use the retrieved key here
     );
 
     // Read the image file as bytes (works on both Web and Mobile)

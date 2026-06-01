@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future<void> main() async {
+  // Ensure Flutter bindings are initialized before loading dotenv
+  WidgetsFlutterBinding.ensureInitialized(); 
+  
+  // Load the environment variables
+  await dotenv.load(fileName: ".env"); 
+  
   runApp(const PartyFinderApp());
 }
 
