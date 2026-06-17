@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import '../models/poster_details.dart';
+import 'party_finder_app_flutter_project\lib\Models\poster_details.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GeminiService {

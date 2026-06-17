@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/poster_details.dart';
+import 'party_finder_app_flutter_project\lib\Models\poster_details.dart';
 
 class ApiService {
   // Replace actual FastAPI server URL. 
