@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'party_finder_app_flutter_project\lib\Screens\home_screen.dart';
+import 'party_finder_app_flutter_project/lib/Screens/home_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'party_finder_app_flutter_project\lib\Models\poster_details.dart';
-import 'party_finder_app_flutter_project\lib\Services\api_service.dart';
-import 'party_finder_app_flutter_project\lib\Services\gemini_service.dart';
+import 'party_finder_app_flutter_project/lib/Models/poster_details.dart';
+import 'party_finder_app_flutter_project/lib/Services/api_service.dart';
+import 'party_finder_app_flutter_project/lib/Services/gemini_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
