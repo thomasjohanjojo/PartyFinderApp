@@ -1,4 +1,7 @@
 from pymongo import MongoClient
+import os
+from dotenv import load_dotenv
+from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.errors import PyMongoError
 from bson.objectid import ObjectId
@@ -13,26 +16,38 @@ class DatabaseConnectionError(Exception): pass
 class PosterDetailsClass(PosterDetailsInterface):
 
     #  CONFIGURATION INFORMATION
-    MONGO_DATABASE_URI = "mongodb://localhost:27017/" #The uri to the server where mongodb is running
     NAME_OF_MONGO_DATABASE = "PartyAppDatabase"
     NAME_OF_POSTER_DETAILS_COLLECTION = "PosterDetailsCollection"
+
+    
     
     #Collection object
     posterDetailsCollection: Optional[Collection] = None
 
     def __init__(self):
         try:
-            clientToAccessMongoDBDatabase = MongoClient(self.MONGO_DATABASE_URI)
+            # Load the variables from the .env file into the system configuration
+            load_dotenv()
+            
+            # Read the secure cloud connection string
+            MONGO_URI = os.getenv("MONGO_URI")
+
+            if not MONGO_URI:
+                raise ValueError("Critical Error: MONGO_URI environment variable is missing from the .env file.")
+            
+            clientToAccessMongoDBDatabase = MongoClient(MONGO_URI)
+            
+            # Verify connectivity
             if clientToAccessMongoDBDatabase.admin.command('ping'):
-                print(f"Successfully connected to MongoDB server at {self.MONGO_DATABASE_URI}.")
+                print("Successfully connected to MongoDB Atlas Cloud Server.")
 
             mongoDatabase = clientToAccessMongoDBDatabase[self.NAME_OF_MONGO_DATABASE]
             self.posterDetailsCollection = mongoDatabase[self.NAME_OF_POSTER_DETAILS_COLLECTION]
 
         except ConnectionFailure as e:
             raise DatabaseConnectionError(
-                "Could not connect to MongoDB server. "
-                "Please ensure MongoDB is running locally on port 27017."
+                "Could not connect to MongoDB Atlas Cloud. "
+                "Please check your internet connection, credentials, or Atlas IP Whitelist configurations."
             ) from e
         except Exception as e:
             # Catch all other unexpected errors during initialization
