@@ -11,13 +11,13 @@ from fastapi.middleware.cors import CORSMiddleware # ADD THIS IMPORT FOR CORS AC
 
 app = FastAPI()
 
-# ADD THIS BLOCK TO ENABLE CORS
+# Replace your old allow_origins block with this regex matcher
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], # In production, replace "*" with your Flutter app's domain
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
-    allow_methods=["http://localhost:3000"],
-    allow_headers=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- 1. THE DEPENDENCY PROVIDER ---
