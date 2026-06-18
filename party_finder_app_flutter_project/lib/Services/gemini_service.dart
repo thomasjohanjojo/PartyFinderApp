@@ -5,23 +5,23 @@ import '../Models/poster_details.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GeminiService {
-  
   Future<PosterDetails> extractDetailsFromImage(XFile imageFile) async {
     // READ THE KEY FROM THE .ENV FILE
     final apiKey = dotenv.env['GEMINI_API_KEY'];
-    
+
     if (apiKey == null || apiKey.isEmpty) {
-      throw Exception('Gemini API key is missing. Please check your .env file.');
+      throw Exception(
+          'Gemini API key is missing. Please check your .env file.');
     }
 
     final model = GenerativeModel(
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3.1-flash-lite', // use gemini-flash-latest
       apiKey: apiKey, // Use the retrieved key here
     );
 
     // Read the image file as bytes (works on both Web and Mobile)
     final imageBytes = await imageFile.readAsBytes();
-    
+
     // Determine the MIME type
     String mimeType = 'image/jpeg';
     if (imageFile.name.toLowerCase().endsWith('.png')) mimeType = 'image/png';
@@ -55,7 +55,8 @@ Do not include markdown formatting like ```json in the output.
     // Clean up potential markdown formatting in case the model includes it despite instructions
     String cleanJson = responseText.trim();
     if (cleanJson.startsWith('```json')) {
-      cleanJson = cleanJson.replaceAll('```json', '').replaceAll('```', '').trim();
+      cleanJson =
+          cleanJson.replaceAll('```json', '').replaceAll('```', '').trim();
     } else if (cleanJson.startsWith('```')) {
       cleanJson = cleanJson.replaceAll('```', '').trim();
     }
