@@ -36,7 +36,14 @@ class _UploadPictureWidgetState extends State<UploadPictureWidget> {
                 onPressed: () {}, child: Text("Confirm")), // Yet to be done
             const SizedBox(height: 20),
             ElevatedButton(
-                onPressed: () {}, child: Text("Retake")), // Yet to be done
+                onPressed: () {
+                  setState(() {
+                    _uploadedPictureData = null;
+                    doShowUploadPicButton = true;
+                    doPictureHasBeenUploadedSection = false;
+                  });
+                },
+                child: Text("Retake")), // Yet to be done
           ] else if (doDetailsHaveBeenRetrievedFromAIModelSection)
             ...[]
         ],
