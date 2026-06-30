@@ -247,7 +247,7 @@ async def extract_poster_details_from_image(
     """
 
     # Validate content type
-    if image.content_type not in ("image/jpeg", "image/png", "image/webp"):
+    if image.content_type not in ("image/jpg","image/jpeg", "image/png", "image/webp"):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail="Only JPEG, PNG, or WEBP images are supported."
