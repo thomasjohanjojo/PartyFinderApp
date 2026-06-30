@@ -2,3 +2,5 @@ fastapi
 uvicorn[standard]
 pydantic
 pymongo
+google-genai
+python-multipart

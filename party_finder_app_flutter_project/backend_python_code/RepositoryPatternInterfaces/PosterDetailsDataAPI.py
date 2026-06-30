@@ -7,6 +7,21 @@ from functools import lru_cache #To make the database connection a singlton to p
 from datetime import date as DateType # Import date and alias it to avoid conflict
 from datetime import time as TimeType # Import time and alias it for clarity
 from fastapi.middleware.cors import CORSMiddleware # ADD THIS IMPORT FOR CORS ACTIVATION
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, File, UploadFile
+from google import genai
+from google.genai import types
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+
+@lru_cache
+def get_gemini_client() -> genai.Client:
+    print("Creating the Gemini API client singleton...")
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY environment variable is not set")
+    return genai.Client(api_key=api_key)
 
 
 app = FastAPI()
@@ -214,3 +229,76 @@ def add_new_poster(
     # Return the newly created object. 
     # FastAPI returns it with the 201 Created status code.
     return created_poster
+
+# --- The Endpoint Definition ---
+@app.post(
+    "/posters/extract-from-image",
+    response_model=PosterDetails,
+    summary="Extract poster details from an uploaded image using Gemini"
+)
+async def extract_poster_details_from_image(
+    image: Annotated[UploadFile, File(...)],
+    client: Annotated[genai.Client, Depends(get_gemini_client)]
+):
+    """
+    Accepts an image file (e.g. a photo of an event poster), sends it to the
+    Gemini API, and asks it to extract structured details matching the
+    PosterDetails pydantic model. Returns the extracted, validated data.
+    """
+
+    # Validate content type
+    if image.content_type not in ("image/jpeg", "image/png", "image/webp"):
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Only JPEG, PNG, or WEBP images are supported."
+        )
+
+    image_bytes = await image.read()
+
+    prompt = (
+        "You are looking at a photo of an event poster."
+        "Select the one in the middle of the picture and the most complete."
+        " Extract the following "
+        "details and return them strictly according to the provided schema:\n"
+        "- id: if no ID is visible on the poster, return an empty string.\n"
+        "- nameOfTheEvent: the name/title of the event.\n"
+        "- dateAndTime: the date and time of the event, combined into a single "
+        "ISO 8601 datetime. If multiple times are listed, use the earliest one. "
+        "If no time is visible, default to 00:00:00.\n"
+        "- entryFee: the entry fee as a float. If not visible or the event is "
+        "free, return 0.0."
+    )
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                types.Part.from_bytes(data=image_bytes, mime_type=image.content_type),
+                prompt
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=PosterDetails
+            )
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to get a response from Gemini: {str(e)}"
+        )
+
+    if response.text is None:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Gemini returned an empty response."
+        )
+
+    try:
+        extracted_poster = PosterDetails.model_validate_json(response.text)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Gemini's response did not match the expected schema: {str(e)}"
+        )
+
+    return extracted_poster
